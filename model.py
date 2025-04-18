@@ -58,7 +58,7 @@ class ResidualBlock(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, in_channels:int, out_channels:int, num_residual_blocks:int = 16):
+    def __init__(self, in_channels:int,  num_residual_blocks:int = 16):
         super().__init__()
         self.initial = ConvBlock(in_channels, 64, kernel_size=9, stride=1, padding=4, use_bn=False)
         self.residuals = nn.Sequential(
@@ -68,7 +68,7 @@ class Generator(nn.Module):
         self.convblock = ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, use_act= False)
         self.upsample1 = UpsamebleBlock(64, scale_fator=2)
         self.upsample2 = UpsamebleBlock(64, scale_fator=2)
-        self.final = nn.Conv2d(64, out_channels, kernel_size=9, stride=1, padding=4)
+        self.final = nn.Conv2d(64, in_channels, kernel_size=9, stride=1, padding=4)
     def forward(self, x):
         first = self.initial(x)
         x = self.residuals(first)
@@ -105,4 +105,18 @@ class Discriminator(nn.Module):
     def forward(self, x):
         x= self.blocks(x)
         return  self.classifier(x)
-          
+
+def test():
+    low_res = 100
+    with torch.cuda.amp.autocast(): #autocast for mixed precision training helps to precision using float data types
+        x = torch.randn((5, 3, low_res, low_res))
+        gen = Generator(in_channels=3)
+        gen_out = gen(x)
+        print(f"Generator output shape: {gen_out.shape}")
+        disc = Discriminator()
+        disc_out = disc(gen_out)
+        print(f"Discriminator output shape: {disc_out.shape}")
+
+
+if __name__ == "__main__":
+    test()  
